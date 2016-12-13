@@ -1,0 +1,9 @@
+max_speed,500
+max_hp,20
+size,48,48
+battle_num,1
+equips,sword,trebuchet,booster
+money,0
+hp,20
+speed,0
+jump,0
