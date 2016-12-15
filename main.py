@@ -1,5 +1,4 @@
 from kivy.app import App
-from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.vector import Vector
@@ -19,7 +18,9 @@ from collections import OrderedDict
 from functools import partial
 import random
 
+from screens import TitleScreen
 from widgets import FlashingText
+
 # Constants
 FPS = 60
 # Transforming 'stat' values into in game values
@@ -926,13 +927,14 @@ ITEM_CONVERSION_TABLE = {
     'booster': ChickenBoosters
 }
 
-# Real deal things
 
+# Real deal things
 class ScreenManagement(ScreenManager):
-    
+
     def __init__(self, **kw):
         super(ScreenManagement, self).__init__(**kw)
-        self.add_widget(TitleScreen(name='Title Screen'))
+        self.add_widget(TitleScreen(name='Title Screen',
+                                    input_handler=INPUT_HANDLER))
         self.title_screen()
         global SCREEN_MANAGEMENT
         SCREEN_MANAGEMENT = self # Globals!!!...
@@ -964,37 +966,6 @@ class ScreenManagement(ScreenManager):
             self.remove_widget(self.get_screen('Shop Screen'))
         self.add_widget(ShopScreen(name='Shop Screen'))
         self.current = 'Shop Screen'
-
-class TitleScreen(Screen):
-    
-    def __init__(self, **kw):
-        super(TitleScreen, self).__init__(**kw)
-        title_text = Label(text='There is only [i]One Room[/i] for [b]Top Chicken[/b]... [size=36sp]And you have [b]10[/b] battles to get there...[/size]', text_size=Window.size, markup=True, valign='top', font_size='40sp')
-        title_text2 = Label(text='[i][b][sub]One[/sub] Cock at The [sup]Top[/sup][/b][/i]', markup=True, font_size='72sp')
-        press_enter = FlashingText(interval=1.25, text='Press ENTER to start', font_size='36sp', y=-100)
-        title_text3 = Label(pos=(0, -150), text='By Kevin Xin for Ludum Dare 37', markup=True, font_size='24sp')
-        title_text4 = Label(pos=(0, -175), text='Music Credits to Kevin MacLeod (incompetech.com)', markup=True, font_size='20sp')
-        title_text5 = Label(pos=(-300, 0), text='Controls: WASD Abilities: JKL Navigation: Enter', text_size=(Window.width/4, Window.height), markup=True, font_size='24sp')
-        self.add_widget(title_text)
-        self.add_widget(title_text2)
-        self.add_widget(title_text3)
-        self.add_widget(title_text4)
-        self.add_widget(title_text5)
-        self.add_widget(press_enter)
-
-        INPUT_HANDLER.keyboard.bind(on_key_down=self._on_key_down)
-
-    def on_pre_enter(self): # These two make the key events on this widget on accessible here.
-        INPUT_HANDLER.keyboard.bind(on_key_down=self._on_key_down)
-
-    def on_pre_leave(self):
-        INPUT_HANDLER.keyboard.unbind(on_key_down=self._on_key_down)
-
-    def _on_key_down(self, keyboard, keycode, text, modifiers):
-        code, key = keycode
-        if key == 'enter':
-            #self.parent.shop()
-            self.parent.start_game()
 
 class BattleScreen(Screen):
     
