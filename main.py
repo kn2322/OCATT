@@ -5,20 +5,19 @@ from kivy.animation import Animation
 from kivy.vector import Vector
 from kivy.core.window import Window
 from kivy.core.audio import SoundLoader
-from kivy.graphics import Rectangle, Color, PushMatrix, PopMatrix, Scale, Translate
-from kivy.properties import ListProperty, StringProperty, NumericProperty, ObjectProperty
+from kivy.graphics import (Rectangle, Color, PushMatrix, PopMatrix, Scale,
+                           Translate)
+from kivy.properties import (ListProperty, StringProperty, NumericProperty,
+                             ObjectProperty)
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.relativelayout import RelativeLayout
 from itertools import product, combinations
 from collections import OrderedDict
 from functools import partial
 import random
-import math
-import os
 
 # Constants
 FPS = 60
@@ -27,19 +26,19 @@ SPEED_COEFFICIENT = lambda x: (20 * x) + 400
 JUMP_COEFFFICIENT = lambda x: (30 * x) + 1050
 
 
-
 # Misc classes
-class FlashingText(Label): # For flashing text effect
+class FlashingText(Label):  # For flashing text effect
 
-    def __init__(self, interval=1, **kw): # Interval is time for one complete loop
+    def __init__(self, interval=1, **kw):  # Interval is time for one complete loop
         super(FlashingText, self).__init__(**kw)
         self.interval = interval
         fade_to_black = Animation(opacity=0, duration=interval/2)
         reappear = Animation(opacity=1, duration=interval/2)
-        cycle = fade_to_black + reappear # Sequences animations
-        cycle.repeat = True # Repeat the animations
+        cycle = fade_to_black + reappear  # Sequences animations
+        cycle.repeat = True  # Repeat the animations
         self.cycle = cycle
         self.cycle.start(self)
+
 
 class IDisplay(BoxLayout):
 
