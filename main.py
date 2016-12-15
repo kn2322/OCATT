@@ -1535,43 +1535,44 @@ class SoundEngine(Widget):
             self.current.play()
 
 
-class OCaTTApp(App): # One room at the top
+class OCaTTApp(App):  # One room at the top
 
     savefile = 'savefile.txt'
 
-    def __init__(self, **kw): # Pending: Initialize window parameters
+    def __init__(self, **kw):  # Pending: Initialize window parameters
         super(OCaTTApp, self).__init__(**kw)
         self.sound_engine = None
 
-    def parse_savefile(*args): # looks for save file, checks if exists, returns relevant data.
+    # looks for save file, checks if exists, returns relevant data.
+    def parse_savefile(*args):
         with open(OCaTTApp.savefile, 'r') as f:
             data = f.read().split('\n')
         data = [i.split(',') for i in data]
         # this dict can be used as kwargs for battle player.
         player_info = {
-        'max_speed': int(data[0][1]), # Unused
-        'max_hp': int(data[1][1]),
-        'size': [int(i) for i in data[2][1:]],
-        'battle_num': int(data[3][1]),
-        'equips': [ITEM_CONVERSION_TABLE[i] for i in data[4][1:]],
-        'money': int(data[5][1]),
-        'hp': int(data[6][1]),
-        'speed': int(data[7][1]),
-        'jump': int(data[8][1])
+            'max_speed': int(data[0][1]),  # Unused
+            'max_hp': int(data[1][1]),
+            'size': [int(i) for i in data[2][1:]],
+            'battle_num': int(data[3][1]),
+            'equips': [ITEM_CONVERSION_TABLE[i] for i in data[4][1:]],
+            'money': int(data[5][1]),
+            'hp': int(data[6][1]),
+            'speed': int(data[7][1]),
+            'jump': int(data[8][1])
         }
         global PLAYER_INFO
         PLAYER_INFO = player_info
 
-        global BATTLE_INFO # The keys used for initializing battle version.
-        #BATTLE_INFO = ('max_speed', 'max_hp', 'size', 'equips', 'hp', 'speed', 'jump')
+        global BATTLE_INFO  # The keys used for initializing battle version.
+        # BATTLE_INFO = ('max_speed', 'max_hp', 'size', 'equips', 'hp',
+        #                'speed', 'jump')
         BATTLE_INFO = ('max_hp', 'size', 'equips', 'hp', 'speed', 'jump')
 
-
     def build(self):
-        self.parse_savefile() # get player info.
+        self.parse_savefile()  # get player info.
         sm = ScreenManagement()
         self.sound_engine = SoundEngine()
         return sm
-        
+
 if __name__ == '__main__':
     OCaTTApp().run()
