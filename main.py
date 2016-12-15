@@ -19,6 +19,7 @@ from collections import OrderedDict
 from functools import partial
 import random
 
+from widgets import FlashingText
 # Constants
 FPS = 60
 # Transforming 'stat' values into in game values
@@ -27,19 +28,6 @@ JUMP_COEFFFICIENT = lambda x: (30 * x) + 1050
 
 
 # Misc classes
-class FlashingText(Label):  # For flashing text effect
-
-    def __init__(self, interval=1, **kw):  # Interval is time for one complete loop
-        super(FlashingText, self).__init__(**kw)
-        self.interval = interval
-        fade_to_black = Animation(opacity=0, duration=interval/2)
-        reappear = Animation(opacity=1, duration=interval/2)
-        cycle = fade_to_black + reappear  # Sequences animations
-        cycle.repeat = True  # Repeat the animations
-        self.cycle = cycle
-        self.cycle.start(self)
-
-
 class IDisplay(BoxLayout):
 
     bgcolor = ListProperty([1,1,1,1])
