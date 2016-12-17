@@ -1,24 +1,24 @@
 from kivy.app import App
-from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.vector import Vector
 from kivy.core.window import Window
 from kivy.core.audio import SoundLoader
-from kivy.graphics import Rectangle, Color, PushMatrix, PopMatrix, Scale, Translate
-from kivy.properties import ListProperty, StringProperty, NumericProperty, ObjectProperty
+from kivy.graphics import (Rectangle, Color, PushMatrix, PopMatrix, Scale,
+                           Translate)
+from kivy.properties import (ListProperty, StringProperty, NumericProperty,
+                             ObjectProperty)
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.relativelayout import RelativeLayout
 from itertools import product, combinations
 from collections import OrderedDict
 from functools import partial
 import random
-import math
-import os
+
+from screens import TitleScreen
+from widgets import FlashingText, FloatingHealthBar
 
 # Constants
 FPS = 60
@@ -26,283 +26,8 @@ FPS = 60
 SPEED_COEFFICIENT = lambda x: (20 * x) + 400
 JUMP_COEFFFICIENT = lambda x: (30 * x) + 1050
 
-Builder.load_string("""
-# BoxLayout interface when battling.
-<BattleInterface>
-    items: items
-    orientation: 'vertical'
-    Widget:
-        size_hint: 1, 0.8
-    BoxLayout:
-        id: items
-        size_hint: 1, 0.2
-        orientation: 'horizontal'
-
-<IDisplay>
-    top_w: top_w
-    orientation: 'vertical'
-    canvas:
-        Color:
-            rgba: self.bgcolor
-        Rectangle:
-            size: self.size
-            pos: self.pos
-    canvas.after:
-        Color:
-            rgba: 1, 1, 1, 0.5
-        Rectangle:
-            size: root.width, (self.cooldown / self.max_cooldown) * root.height
-            pos: self.pos
-    Label:
-        id: top_w
-        size_hint: 1, 0.4
-        font_size: '36sp'
-
-<DeathScreen>
-    Label:
-        pos: 0, 50
-        font_size: '96sp'
-        text: 'Gameover'
-    Label:
-        pos: 0, -100
-        font_size: '24sp'
-        markup: True
-        text: 'There was one room for [b][i]TOP COCK[/b][/i], and you are not in that room.'
-
-<VictoryScreen>
-    Label:
-        font_size: '30sp'
-        text: root.display_text
-    Label:
-        markup: True
-        pos: 0, - 40
-        font_size: '24sp'
-        text: 'You got [i][size=36sp][color=#e6e600]' + str(int(root.gained_money)) + '[/size][/color][/i] Dollars!'
-
-<ShopScreen>
-    one: one
-    two: two
-    three: three
-    four: four
-    five: five
-    six: six
-    seven: seven
-    eight: eight
-    exit: exit
-    selection: selection
-    health_bar: health_bar
-    stat_1: stat_1
-    stat_2: stat_2
-    stat_3: stat_3
-
-    BoxLayout:
-        orientation: 'horizontal'
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint: 0.5, 1
-            Image:
-                source: 'assets/shopkeeper.png'
-                size_hint: 1, 0.8
-            # Exit
-            Label:
-                id: exit
-                size_hint: 1, 0.2
-                canvas.before:
-                    Color:
-                        rgb: 128/255, 32/255, 0/255
-                    Rectangle:
-                        size: self.size
-                        pos: self.pos
-                font_size: '36sp'
-                markup: True
-                text: 'Next Battle -> [color=#ff0066]{}[/color]'.format(int(root.battle_num))
-        # Shop menu
-        BoxLayout:
-            size_hint: 0.4, 1
-            orientation: 'vertical'
-            # Background
-            canvas:
-                Color:
-                    rgba: 1, 1, 1, 0.3
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-            # Shelf items
-            GridLayout:
-                size_hint: 1, 0.4
-                rows: 2
-                Widget:
-                    id: one
-                Widget:
-                    id: two
-                Widget:
-                    id: three
-                Widget:
-                    id: four
-            # Health bar
-            BoxLayout:
-                id: five
-                orientation: 'horizontal'
-                size_hint: 1, 0.2
-                Widget:
-                    size_hint: 0.2, 1
-                # Health bar
-                BoxLayout:
-                    orientation: 'vertical'
-                    size_hint: 0.6, 1
-                    Widget:
-                        size_hint: 1, 0.3
-                    Label:
-                        # pos is workaround.
-                        pos: -100, -100
-                        markup: True
-                        id: health_bar
-                        size_hint: 1, 0.4
-                        font_size: '24sp'
-                    Widget:
-                        size_hint: 1, 0.3
-                # Plus Button
-                Image:
-                    source: 'assets/plus.png'
-                    size_hint: 0.2, 1
-            # Stats
-            BoxLayout:
-                size_hint: 1, 0.4
-                orientation: 'vertical'
-                # These three repeat bc I can't be bothered to properly set up kv.
-                BoxLayout:
-                    orientation: 'horizontal'
-                    # Stat
-                    StatLabel:
-                        text: 'Speed'
-                    # Value
-                    StatnumLabel:
-                        id: stat_1
-                        text: str(0)
-                    # Plus button
-                    Image:
-                        id: six
-                        source: 'assets/plus.png'
-                        size_hint: 0.3, 1
-                BoxLayout:
-                    orientation: 'horizontal'
-                    # Stat
-                    StatLabel:
-                        text: 'Jump'
-                    # Value
-                    StatnumLabel:
-                        id: stat_2
-                        text: str(0)
-                    # Plus button
-                    Image:
-                        id: seven
-                        source: 'assets/plus.png'
-                        size_hint: 0.3, 1
-                BoxLayout:
-                    orientation: 'horizontal'
-                    # Stat
-                    StatLabel:
-                        text: 'Max HP'
-                    # Value
-                    StatnumLabel:
-                        id: stat_3
-                        text: str(0)
-                    # Plus button
-                    Image:
-                        id: eight
-                        source: 'assets/plus.png'
-                        size_hint: 0.3, 1
-        # Prices
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint: 0.1, 1
-            canvas.before:
-                Color:
-                    rgb: 97/255, 64/255, 31/255
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-                Color:
-            Widget:
-                size_hint: 1, 0.4
-                canvas:
-                    Rectangle:
-                        source: 'assets/money.png'
-                        pos: self.x, self.top - self.width
-                        size: self.width, self.width
-            # HP
-            PriceLabel:
-                size_hint: 1, 0.2
-                text: str(root.health_cost)
-            PriceLabel:
-                size_hint: 1, 0.4 / 3
-                text: str(root.stat_1_cost)
-            PriceLabel:
-                size_hint: 1, 0.4 / 3
-                text: str(root.stat_2_cost)
-            PriceLabel:
-                size_hint: 1, 0.4 / 3
-                text: str(root.stat_3_cost)
-
-
-    # The glowy selection box.
-    Widget:
-        size: one.size
-        pos: one.pos
-        size_hint: None, None
-        id: selection
-        canvas.before:
-            Color:
-                rgba: 1, 0, 0.4, 1
-            BorderImage:
-                size: self.width+30, self.height+30
-                pos: self.x - 15, self.y - 15
-                source: 'assets/border.png'
-                border: [1, 1, 1, 1]
-
-    # Money count
-    Label:
-        markup: True
-        text: 'Money: [color=#e6e600]{}[/color]'.format(str(root.money))
-        font_size: '36sp'
-        pos: -1 * root.width / 2 + 125, root.height / 2 - 450
-
-<StatLabel@Label>
-    markup: True
-    size_hint: 0.4, 1
-    halign: 'left'
-    valign: 'middle'
-    text_size: self.width - 40, self.height
-    font_size: '24sp'
-
-<StatnumLabel@Label>
-    markup: True
-    size_hint: 0.3, 1
-    halign: 'right'
-    valign: 'middle'
-    text_size: self.width - 40, self.height
-    font_size: '24sp'
-
-<PriceLabel@StatnumLabel>
-    markup: True
-    halign: 'center'
-    text_size: self.size
-""")
-
 
 # Misc classes
-class FlashingText(Label): # For flashing text effect
-
-    def __init__(self, interval=1, **kw): # Interval is time for one complete loop
-        super(FlashingText, self).__init__(**kw)
-        self.interval = interval
-        fade_to_black = Animation(opacity=0, duration=interval/2)
-        reappear = Animation(opacity=1, duration=interval/2)
-        cycle = fade_to_black + reappear # Sequences animations
-        cycle.repeat = True # Repeat the animations
-        self.cycle = cycle
-        self.cycle.start(self)
-
 class IDisplay(BoxLayout):
 
     bgcolor = ListProperty([1,1,1,1])
@@ -335,71 +60,6 @@ class IDisplay(BoxLayout):
     def _on_change_max_cd(self, _, max_cd):
         self.max_cooldown = max_cd
 
-class FloatingHealthBar(Widget):
-
-    max_hp = NumericProperty()
-    hp = NumericProperty()
-
-    def __init__(self, padding, user, color,**kw):
-        super(FloatingHealthBar, self).__init__(**kw)
-        self.padding = padding
-        self.offset = Vector(0, 75)
-        self.user = user
-        self.max_hp = user.max_hp
-        self.hp = user.hp
-        self.user.bind(hp=self._on_change_hp)
-        self.user.bind(center=self._on_change_center)
-        self.color = color
-        self.size = (150, 10)
-        self.instructions = []
-
-        self.update_look()
-
-    def _on_change_hp(self, _, hp):
-        self.hp = hp
-        self.update_look()
-
-    def _on_change_center(self, _, center):
-        self.center = Vector(center) + self.offset
-        self.update_look()
-
-    def update_look(self): # Called on all observer events.
-        padding_space = self.padding * (self.max_hp - 1)
-        hpblock_width = (self.width - padding_space) / self.max_hp
-        num_colored = self.hp // 1
-        instructions = []
-
-        # Health portion underlying.
-        instructions.append(Color(0,0,0,1))
-        instructions.append(Rectangle(size=self.size, pos=self.pos))
-        instructions.append(Color(*self.color))
-        hp_ratio = self.hp / self.max_hp
-        instructions.append(Rectangle(size=(self.width*hp_ratio, self.height), pos=self.pos))
-
-        x = self.x + hpblock_width
-        instructions.append(Color())
-        for i in range(self.max_hp-1):
-            instructions.append(Rectangle(size=(self.padding, self.height), pos=(x, self.y)))
-            x += self.padding + hpblock_width
-        instructions.append(Color())
-        """
-        if self.hp > 0:
-            instructions.append(Color(*self.color))
-            instructions.append(Rectangle(size=(hpblock_width, self.height), pos=self.pos))
-        x = self.x + hpblock_width
-        for i in range(self.max_hp-1):
-            if i > num_colored-2:
-                c = (0,0,0,1)
-            else:
-                c = self.color
-            instructions.append(Color())
-            instructions.append(Rectangle(size=(self.padding, self.height), pos=(x, self.y)))
-            x += self.padding
-            instructions.append(Color(*c))
-            instructions.append(Rectangle(size=(hpblock_width, self.height), pos=(x, self.y)))
-            x += hpblock_width
-            instructions.append(Color())"""
-        self.instructions = instructions
 
 class StatBar(BoxLayout):
     pass
@@ -1201,13 +861,14 @@ ITEM_CONVERSION_TABLE = {
     'booster': ChickenBoosters
 }
 
-# Real deal things
 
+# Real deal things
 class ScreenManagement(ScreenManager):
-    
+
     def __init__(self, **kw):
         super(ScreenManagement, self).__init__(**kw)
-        self.add_widget(TitleScreen(name='Title Screen'))
+        self.add_widget(TitleScreen(name='Title Screen',
+                                    input_handler=INPUT_HANDLER))
         self.title_screen()
         global SCREEN_MANAGEMENT
         SCREEN_MANAGEMENT = self # Globals!!!...
@@ -1239,37 +900,6 @@ class ScreenManagement(ScreenManager):
             self.remove_widget(self.get_screen('Shop Screen'))
         self.add_widget(ShopScreen(name='Shop Screen'))
         self.current = 'Shop Screen'
-
-class TitleScreen(Screen):
-    
-    def __init__(self, **kw):
-        super(TitleScreen, self).__init__(**kw)
-        title_text = Label(text='There is only [i]One Room[/i] for [b]Top Chicken[/b]... [size=36sp]And you have [b]10[/b] battles to get there...[/size]', text_size=Window.size, markup=True, valign='top', font_size='40sp')
-        title_text2 = Label(text='[i][b][sub]One[/sub] Cock at The [sup]Top[/sup][/b][/i]', markup=True, font_size='72sp')
-        press_enter = FlashingText(interval=1.25, text='Press ENTER to start', font_size='36sp', y=-100)
-        title_text3 = Label(pos=(0, -150), text='By Kevin Xin for Ludum Dare 37', markup=True, font_size='24sp')
-        title_text4 = Label(pos=(0, -175), text='Music Credits to Kevin MacLeod (incompetech.com)', markup=True, font_size='20sp')
-        title_text5 = Label(pos=(-300, 0), text='Controls: WASD Abilities: JKL Navigation: Enter', text_size=(Window.width/4, Window.height), markup=True, font_size='24sp')
-        self.add_widget(title_text)
-        self.add_widget(title_text2)
-        self.add_widget(title_text3)
-        self.add_widget(title_text4)
-        self.add_widget(title_text5)
-        self.add_widget(press_enter)
-
-        INPUT_HANDLER.keyboard.bind(on_key_down=self._on_key_down)
-
-    def on_pre_enter(self): # These two make the key events on this widget on accessible here.
-        INPUT_HANDLER.keyboard.bind(on_key_down=self._on_key_down)
-
-    def on_pre_leave(self):
-        INPUT_HANDLER.keyboard.unbind(on_key_down=self._on_key_down)
-
-    def _on_key_down(self, keyboard, keycode, text, modifiers):
-        code, key = keycode
-        if key == 'enter':
-            #self.parent.shop()
-            self.parent.start_game()
 
 class BattleScreen(Screen):
     
@@ -1798,43 +1428,44 @@ class SoundEngine(Widget):
             self.current.play()
 
 
-class OCaTTApp(App): # One room at the top
+class OCaTTApp(App):  # One room at the top
 
     savefile = 'savefile.txt'
 
-    def __init__(self, **kw): # Pending: Initialize window parameters
+    def __init__(self, **kw):  # Pending: Initialize window parameters
         super(OCaTTApp, self).__init__(**kw)
         self.sound_engine = None
 
-    def parse_savefile(*args): # looks for save file, checks if exists, returns relevant data.
+    # looks for save file, checks if exists, returns relevant data.
+    def parse_savefile(*args):
         with open(OCaTTApp.savefile, 'r') as f:
             data = f.read().split('\n')
         data = [i.split(',') for i in data]
         # this dict can be used as kwargs for battle player.
         player_info = {
-        'max_speed': int(data[0][1]), # Unused
-        'max_hp': int(data[1][1]),
-        'size': [int(i) for i in data[2][1:]],
-        'battle_num': int(data[3][1]),
-        'equips': [ITEM_CONVERSION_TABLE[i] for i in data[4][1:]],
-        'money': int(data[5][1]),
-        'hp': int(data[6][1]),
-        'speed': int(data[7][1]),
-        'jump': int(data[8][1])
+            'max_speed': int(data[0][1]),  # Unused
+            'max_hp': int(data[1][1]),
+            'size': [int(i) for i in data[2][1:]],
+            'battle_num': int(data[3][1]),
+            'equips': [ITEM_CONVERSION_TABLE[i] for i in data[4][1:]],
+            'money': int(data[5][1]),
+            'hp': int(data[6][1]),
+            'speed': int(data[7][1]),
+            'jump': int(data[8][1])
         }
         global PLAYER_INFO
         PLAYER_INFO = player_info
 
-        global BATTLE_INFO # The keys used for initializing battle version.
-        #BATTLE_INFO = ('max_speed', 'max_hp', 'size', 'equips', 'hp', 'speed', 'jump')
+        global BATTLE_INFO  # The keys used for initializing battle version.
+        # BATTLE_INFO = ('max_speed', 'max_hp', 'size', 'equips', 'hp',
+        #                'speed', 'jump')
         BATTLE_INFO = ('max_hp', 'size', 'equips', 'hp', 'speed', 'jump')
 
-
     def build(self):
-        self.parse_savefile() # get player info.
+        self.parse_savefile()  # get player info.
         sm = ScreenManagement()
         self.sound_engine = SoundEngine()
         return sm
-        
+
 if __name__ == '__main__':
     OCaTTApp().run()

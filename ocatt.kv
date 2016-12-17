@@ -1,0 +1,260 @@
+# BoxLayout interface when battling.
+<BattleInterface>
+    items: items
+    orientation: 'vertical'
+    Widget:
+        size_hint: 1, 0.8
+    BoxLayout:
+        id: items
+        size_hint: 1, 0.2
+        orientation: 'horizontal'
+
+<IDisplay>
+    top_w: top_w
+    orientation: 'vertical'
+    canvas:
+        Color:
+            rgba: self.bgcolor
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    canvas.after:
+        Color:
+            rgba: 1, 1, 1, 0.5
+        Rectangle:
+            size: root.width, (self.cooldown / self.max_cooldown) * root.height
+            pos: self.pos
+    Label:
+        id: top_w
+        size_hint: 1, 0.4
+        font_size: '36sp'
+
+<DeathScreen>
+    Label:
+        pos: 0, 50
+        font_size: '96sp'
+        text: 'Gameover'
+    Label:
+        pos: 0, -100
+        font_size: '24sp'
+        markup: True
+        text: 'There was one room for [b][i]TOP COCK[/b][/i], and you are not in that room.'
+
+<VictoryScreen>
+    Label:
+        font_size: '30sp'
+        text: root.display_text
+    Label:
+        markup: True
+        pos: 0, - 40
+        font_size: '24sp'
+        text: 'You got [i][size=36sp][color=#e6e600]' + str(int(root.gained_money)) + '[/size][/color][/i] Dollars!'
+
+<ShopScreen>
+    one: one
+    two: two
+    three: three
+    four: four
+    five: five
+    six: six
+    seven: seven
+    eight: eight
+    exit: exit
+    selection: selection
+    health_bar: health_bar
+    stat_1: stat_1
+    stat_2: stat_2
+    stat_3: stat_3
+
+    BoxLayout:
+        orientation: 'horizontal'
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.5, 1
+            Image:
+                source: 'assets/shopkeeper.png'
+                size_hint: 1, 0.8
+            # Exit
+            Label:
+                id: exit
+                size_hint: 1, 0.2
+                canvas.before:
+                    Color:
+                        rgb: 128/255, 32/255, 0/255
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                font_size: '36sp'
+                markup: True
+                text: 'Next Battle -> [color=#ff0066]{}[/color]'.format(int(root.battle_num))
+        # Shop menu
+        BoxLayout:
+            size_hint: 0.4, 1
+            orientation: 'vertical'
+            # Background
+            canvas:
+                Color:
+                    rgba: 1, 1, 1, 0.3
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+            # Shelf items
+            GridLayout:
+                size_hint: 1, 0.4
+                rows: 2
+                Widget:
+                    id: one
+                Widget:
+                    id: two
+                Widget:
+                    id: three
+                Widget:
+                    id: four
+            # Health bar
+            BoxLayout:
+                id: five
+                orientation: 'horizontal'
+                size_hint: 1, 0.2
+                Widget:
+                    size_hint: 0.2, 1
+                # Health bar
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: 0.6, 1
+                    Widget:
+                        size_hint: 1, 0.3
+                    Label:
+                        # pos is workaround.
+                        pos: -100, -100
+                        markup: True
+                        id: health_bar
+                        size_hint: 1, 0.4
+                        font_size: '24sp'
+                    Widget:
+                        size_hint: 1, 0.3
+                # Plus Button
+                Image:
+                    source: 'assets/plus.png'
+                    size_hint: 0.2, 1
+            # Stats
+            BoxLayout:
+                size_hint: 1, 0.4
+                orientation: 'vertical'
+                # These three repeat bc I can't be bothered to properly set up kv.
+                BoxLayout:
+                    orientation: 'horizontal'
+                    # Stat
+                    StatLabel:
+                        text: 'Speed'
+                    # Value
+                    StatnumLabel:
+                        id: stat_1
+                        text: str(0)
+                    # Plus button
+                    Image:
+                        id: six
+                        source: 'assets/plus.png'
+                        size_hint: 0.3, 1
+                BoxLayout:
+                    orientation: 'horizontal'
+                    # Stat
+                    StatLabel:
+                        text: 'Jump'
+                    # Value
+                    StatnumLabel:
+                        id: stat_2
+                        text: str(0)
+                    # Plus button
+                    Image:
+                        id: seven
+                        source: 'assets/plus.png'
+                        size_hint: 0.3, 1
+                BoxLayout:
+                    orientation: 'horizontal'
+                    # Stat
+                    StatLabel:
+                        text: 'Max HP'
+                    # Value
+                    StatnumLabel:
+                        id: stat_3
+                        text: str(0)
+                    # Plus button
+                    Image:
+                        id: eight
+                        source: 'assets/plus.png'
+                        size_hint: 0.3, 1
+        # Prices
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.1, 1
+            canvas.before:
+                Color:
+                    rgb: 97/255, 64/255, 31/255
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+                Color:
+            Widget:
+                size_hint: 1, 0.4
+                canvas:
+                    Rectangle:
+                        source: 'assets/money.png'
+                        pos: self.x, self.top - self.width
+                        size: self.width, self.width
+            # HP
+            PriceLabel:
+                size_hint: 1, 0.2
+                text: str(root.health_cost)
+            PriceLabel:
+                size_hint: 1, 0.4 / 3
+                text: str(root.stat_1_cost)
+            PriceLabel:
+                size_hint: 1, 0.4 / 3
+                text: str(root.stat_2_cost)
+            PriceLabel:
+                size_hint: 1, 0.4 / 3
+                text: str(root.stat_3_cost)
+
+
+    # The glowy selection box.
+    Widget:
+        size: one.size
+        pos: one.pos
+        size_hint: None, None
+        id: selection
+        canvas.before:
+            Color:
+                rgba: 1, 0, 0.4, 1
+            BorderImage:
+                size: self.width+30, self.height+30
+                pos: self.x - 15, self.y - 15
+                source: 'assets/border.png'
+                border: [1, 1, 1, 1]
+
+    # Money count
+    Label:
+        markup: True
+        text: 'Money: [color=#e6e600]{}[/color]'.format(str(root.money))
+        font_size: '36sp'
+        pos: -1 * root.width / 2 + 125, root.height / 2 - 450
+
+<StatLabel@Label>
+    markup: True
+    size_hint: 0.4, 1
+    halign: 'left'
+    valign: 'middle'
+    text_size: self.width - 40, self.height
+    font_size: '24sp'
+
+<StatnumLabel@Label>
+    markup: True
+    size_hint: 0.3, 1
+    halign: 'right'
+    valign: 'middle'
+    text_size: self.width - 40, self.height
+    font_size: '24sp'
+
+<PriceLabel@StatnumLabel>
+    markup: True
+    halign: 'center'
+    text_size: self.size
